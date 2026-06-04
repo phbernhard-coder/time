@@ -1,0 +1,151 @@
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Horloge interactive pour apprendre l'heure en anglais</h2>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body, div { font-family: Arial, sans-serif; }
+  .wrap { display:flex; flex-direction:column; align-items:center; padding:1.5rem; gap:1.2rem; background:#fff; color:#1a1a1a; }
+  .row { display:flex; gap:2rem; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
+  .english-out { font-size:24px; font-weight:600; color:#111; text-align:center; }
+  .digital-out { font-size:15px; color:#666; text-align:center; margin-top:3px; font-family:monospace; }
+  .drag-hint { font-size:12px; color:#999; text-align:center; }
+  .rule-box { background:#f7f7f5; border:1px solid #e0e0e0; border-radius:10px; padding:1rem; min-width:210px; }
+  .rule-title { font-size:11px; font-weight:600; color:#888; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+  .rule-item { display:flex; gap:8px; align-items:center; padding:4px 0; font-size:13px; color:#222; }
+  .rkey { background:#fff; border:1px solid #ccc; border-radius:6px; padding:2px 8px; font-size:12px; color:#666; min-width:85px; text-align:center; }
+  .rkey.lit { background:#e1f5ee; border-color:#1D9E75; color:#0a6644; font-weight:600; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  button { font-size:13px; padding:6px 14px; border:1px solid #ccc; border-radius:7px; background:#fff; cursor:pointer; color:#333; }
+  button:hover { background:#f0f0f0; }
+  button.quiz-btn { background:#1D9E75; color:#fff; border-color:#1D9E75; }
+  button.quiz-btn:hover { background:#0F6E56; }
+</style>
+
+<div class="wrap">
+  <div class="row">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem;">
+      <div id="clock-container" style="position:relative;width:240px;height:240px;cursor:crosshair;">
+        <svg id="clk" viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="120" cy="120" r="116" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
+          <circle cx="120" cy="120" r="108" fill="none" stroke="#eee" stroke-width="1"/>
+          <g id="ticks"></g>
+          <g id="nums"></g>
+          <line id="hhand" x1="120" y1="120" x2="120" y2="76" stroke="#222" stroke-width="5" stroke-linecap="round"/>
+          <line id="mhand" x1="120" y1="120" x2="120" y2="44" stroke="#1D9E75" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="120" cy="120" r="5" fill="#222"/>
+          <circle id="mdot" cx="120" cy="44" r="7" fill="#1D9E75" opacity=".65" style="cursor:grab"/>
+        </svg>
+      </div>
+      <div class="drag-hint">← Clique ou glisse sur le cadran →</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.8rem;padding-top:.3rem;">
+      <div>
+        <div class="english-out" id="eng">It's three o'clock.</div>
+        <div class="digital-out" id="dig">3:00</div>
+      </div>
+      <div class="rule-box">
+        <div class="rule-title">La règle en anglais</div>
+        <div class="rule-item"><span class="rkey" id="k0">:00</span> o'clock</div>
+        <div class="rule-item"><span class="rkey" id="k1">:01 – :29</span> … <b>past</b> [heure]</div>
+        <div class="rule-item"><span class="rkey" id="k2">:31 – :59</span> … <b>to</b> [heure+1]</div>
+        <div class="rule-item"><span class="rkey" id="k3">:30</span> <b>half past</b> [heure]</div>
+        <div class="rule-item"><span class="rkey" id="k4">:15 / :45</span> <b>quarter</b> past / to</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="set(3,0)">3:00</button>
+    <button onclick="set(8,5)">8:05</button>
+    <button onclick="set(9,15)">9:15</button>
+    <button onclick="set(10,30)">10:30</button>
+    <button onclick="set(12,45)">12:45</button>
+    <button onclick="set(2,50)">2:50</button>
+    <button onclick="set(7,20)">7:20</button>
+    <button onclick="set(6,35)">6:35</button>
+  </div>
+</div>
+
+<script>
+const CX=120,CY=120;
+let H=3,M=0;
+const hnames=['twelve','one','two','three','four','five','six','seven','eight','nine','ten','eleven'];
+const tg=document.getElementById('ticks'), ng=document.getElementById('nums');
+const NS='http://www.w3.org/2000/svg';
+
+for(let i=0;i<60;i++){
+  const a=i/60*2*Math.PI-Math.PI/2;
+  const r1=i%5===0?98:106, r2=108;
+  const l=document.createElementNS(NS,'line');
+  l.setAttribute('x1',CX+r1*Math.cos(a)); l.setAttribute('y1',CY+r1*Math.sin(a));
+  l.setAttribute('x2',CX+r2*Math.cos(a)); l.setAttribute('y2',CY+r2*Math.sin(a));
+  l.setAttribute('stroke',i%5===0?'#555':'#ddd');
+  l.setAttribute('stroke-width',i%5===0?'2':'1');
+  tg.appendChild(l);
+}
+for(let i=1;i<=12;i++){
+  const a=i/12*2*Math.PI-Math.PI/2;
+  const t=document.createElementNS(NS,'text');
+  t.setAttribute('x',CX+80*Math.cos(a)); t.setAttribute('y',CY+80*Math.sin(a)+5);
+  t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','14');
+  t.setAttribute('font-weight','600'); t.setAttribute('fill','#222');
+  t.setAttribute('font-family','Arial,sans-serif');
+  t.textContent=i; ng.appendChild(t);
+}
+
+function getEng(h,m){
+  const h12=h%12, hn=(h12+1)%12;
+  if(m===0) return `It's ${hnames[h12]} o'clock.`;
+  if(m===30) return `It's half past ${hnames[h12]}.`;
+  if(m===15) return `It's quarter past ${hnames[h12]}.`;
+  if(m===45) return `It's quarter to ${hnames[hn]}.`;
+  if(m<30) return `It's ${m} past ${hnames[h12]}.`;
+  return `It's ${60-m} to ${hnames[hn]}.`;
+}
+
+function render(){
+  const ha=((H%12)+M/60)/12*2*Math.PI-Math.PI/2;
+  const ma=M/60*2*Math.PI-Math.PI/2;
+  const hh=document.getElementById('hhand'), mh=document.getElementById('mhand'), md=document.getElementById('mdot');
+  hh.setAttribute('x2',CX+50*Math.cos(ha)); hh.setAttribute('y2',CY+50*Math.sin(ha));
+  const mx=CX+72*Math.cos(ma), my=CY+72*Math.sin(ma);
+  mh.setAttribute('x2',mx); mh.setAttribute('y2',my);
+  md.setAttribute('cx',mx); md.setAttribute('cy',my);
+  const h12=H%12, dh=h12===0?12:h12;
+  document.getElementById('dig').textContent=`${dh}:${String(M).padStart(2,'0')}`;
+  document.getElementById('eng').textContent=getEng(H,M);
+  ['k0','k1','k2','k3','k4'].forEach(k=>document.getElementById(k).classList.remove('lit'));
+  if(M===0) document.getElementById('k0').classList.add('lit');
+  else if(M===30){document.getElementById('k3').classList.add('lit');document.getElementById('k1').classList.add('lit');}
+  else if(M===15||M===45) document.getElementById('k4').classList.add('lit');
+  else if(M<30) document.getElementById('k1').classList.add('lit');
+  else document.getElementById('k2').classList.add('lit');
+}
+
+function set(h,m){ H=h; M=m; render(); }
+
+function fromEvent(e,el){
+  const r=el.getBoundingClientRect();
+  const cx2=e.touches?e.touches[0].clientX:e.clientX;
+  const cy2=e.touches?e.touches[0].clientY:e.clientY;
+  return Math.atan2(cy2-r.top-r.height/2, cx2-r.left-r.width/2);
+}
+
+const cc=document.getElementById('clock-container');
+let drag=false;
+function doAngle(e){
+  const a=fromEvent(e,cc);
+  const deg=((a+Math.PI/2)/(2*Math.PI)*360+360)%360;
+  M=Math.round(deg/6)%60; render();
+}
+cc.addEventListener('mousedown',e=>{drag=true;doAngle(e);});
+cc.addEventListener('touchstart',e=>{drag=true;doAngle(e);},{passive:false});
+window.addEventListener('mousemove',e=>{if(drag)doAngle(e);});
+window.addEventListener('touchmove',e=>{if(drag){e.preventDefault();doAngle(e);}},{passive:false});
+window.addEventListener('mouseup',()=>drag=false);
+window.addEventListener('touchend',()=>drag=false);
+cc.addEventListener('click',doAngle);
+
+render();
+</script>
